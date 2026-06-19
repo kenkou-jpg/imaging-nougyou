@@ -2,232 +2,228 @@
 
 Imaging Agriculture
 
-Version 1.0
+Version 2.0
 
 ---
 
-# Purpose
+# Philosophy
 
-計測設計の正本。
+計測は目的ではない。
 
-実装者はこのドキュメントに従い
-イベントを発火させる。
-
-新しいイベントを追加する場合は
-このドキュメントを先に更新する。
+North Star（Land Reading Sessions）を守るために計測する。
+「とりあえず全部計測」は禁止。
 
 ---
 
-# Event: land_card_viewed
-
-## 発火条件
-
-土地カード画面が表示されたとき
-
-（カード一覧からカードを開いた直後）
-
-## Properties
-
-```
-card_id        : string   カードの UUID
-card_title     : string   カードのタイトル
-difficulty     : integer  難易度 1-5
-land_type      : string   土地タイプ
-source         : string   どこから来たか（home / profile / direct）
-```
-
-## 利用目的
-
-* どのカードが最も開かれているかを把握する
-* land_card_answered との比較で離脱ポイントを特定する
-* source 別の流入経路を分析する
-
----
-
-# Event: land_card_answered
-
-## 発火条件
-
-ユーザーが選択肢を選び
-「回答する」ボタンをタップしたとき
-
-## Properties
-
-```
-card_id              : string   カードの UUID
-card_title           : string   カードのタイトル
-difficulty           : integer  難易度 1-5
-land_type            : string   土地タイプ
-selected_choice      : string   選んだ選択肢のテキスト
-is_recommended       : boolean  推奨回答と一致したか
-time_to_answer_ms    : integer  カード表示から回答までのミリ秒
-```
-
-## 利用目的
-
-* Answer Completion Rate の分子（result_viewed と合わせて計算）
-* 回答分布（どの選択肢が選ばれているか）を把握する
-* is_recommended の分布でコンテンツ難易度を調整する
-* time_to_answer_ms で熟考しているか流し見かを判断する
-
----
-
-# Event: result_viewed
-
-## 発火条件
-
-解説画面が表示されたとき
-
-（land_card_answered の直後に遷移した画面）
-
-## Properties
-
-```
-card_id          : string   カードの UUID
-card_title       : string   カードのタイトル
-difficulty       : integer  難易度 1-5
-is_recommended   : boolean  推奨回答と一致したか
-xp_earned        : integer  獲得した XP
-```
-
-## 利用目的
-
-* North Star（Land Reading Sessions）のカウント単位
-* Answer Completion Rate の分母
-* XP 獲得の記録
-
----
-
-# Event: knowledge_card_opened
-
-## 発火条件
-
-解説画面から知識カードリンクをタップしたとき
-
-## Properties
-
-```
-card_id            : string   元の土地カード UUID
-knowledge_title    : string   開いた知識カードのタイトル
-knowledge_category : string   カテゴリ（農法 / 雑草 / 暮らし 等）
-```
-
-## 利用目的
-
-* Knowledge Unlock Rate の計算
-* どの知識カテゴリへの関心が高いか把握する
-* コンテンツ制作の優先度決定に使う
-
----
-
-# Event: xp_earned
-
-## 発火条件
-
-XP が付与されたとき
-
-（result_viewed 直後、または条件達成時）
-
-## Properties
-
-```
-amount         : integer   獲得 XP 量
-reason         : string    付与理由（card_completed / streak_bonus 等）
-total_xp       : integer   累計 XP（付与後）
-current_level  : integer   現在のレベル
-```
-
-## 利用目的
-
-* ゲーム感覚の進捗確認
-* レベルアップ頻度の調整
-* XP 設計のバランス検証
-
----
-
-# Event: streak_updated
-
-## 発火条件
-
-連続記録が更新されたとき
-
-（当日初回の result_viewed 完了時）
-
-## Properties
-
-```
-streak_days      : integer   更新後の連続日数
-is_new_record    : boolean   過去最高を更新したか
-```
-
-## 利用目的
-
-* Streak Retention の計算
-* 連続記録の分布を把握し、ユーザーの習慣化度を測る
-* 連続記録リセット時の離脱との相関を分析する
-
----
-
-# Event: profile_viewed
-
-## 発火条件
-
-プロフィール画面が表示されたとき
-
-## Properties
-
-```
-current_level      : integer   現在のレベル
-total_xp           : integer   累計 XP
-cards_completed    : integer   完了済みカード数
-streak_days        : integer   現在の連続日数
-```
-
-## 利用目的
-
-* プロフィール確認頻度を把握する
-* 成長実感がユーザーを引き戻すかを検証する
-* cards_completed の分布でコンテンツ消費スピードを測る
-
----
-
-# Implementation Notes
-
-## 命名規則
+# 命名規則
 
 ```
 [object]_[action]
 
-object : land_card / knowledge_card / xp / streak / profile
-action : viewed / answered / opened / earned / updated
+object: 操作対象（land_card / result / knowledge_card / xp / streak / profile）
+action: 動詞の過去形（viewed / answered / opened / earned / updated / saved）
 ```
 
-## 共通 Properties（全イベント自動付与）
+---
 
-PostHog の自動収集に依存する。
-追加で以下を Super Properties として設定すること。
+# MVP 必須イベント（P1 — 即実装）
+
+North Star の計測に必要。これがなければ何もわからない。
+
+---
+
+## land_card_viewed
 
 ```
-app_version    : string   アプリバージョン
-user_level     : integer  現在のレベル（ログイン済みの場合）
+発火タイミング:
+  土地カードの Question 画面が表示された時
+
+目的:
+  フローの開始点を計測する
+  Answer Completion Rate の分母になる
+
+Properties:
+  card_id:      string   カードの一意ID
+  land_type:    string   土地タイプ（平地 / 傾斜地 / 放棄地 / 草地 / 里山 等）
+  difficulty:   number   難易度（1〜3）
+  source:       string   どこから来たか（home / next_card / profile）
 ```
 
-## 未ログインユーザー
+---
 
-匿名 ID で計測する。
-ログイン後に PostHog の `identify` で紐付ける。
+## land_card_answered
 
-## 実装優先度
+```
+発火タイミング:
+  ユーザーが選択肢を選び「回答する」を押した時
 
-MVP で必須
+目的:
+  Answer Completion Rate の分子
+  どの選択肢が選ばれているかを把握する
 
-1. land_card_viewed
-2. land_card_answered
-3. result_viewed
+Properties:
+  card_id:           string   カードの一意ID
+  selected_choice:   string   選んだ選択肢（A / B / C / D）
+  is_recommended:    boolean  推奨回答と一致したか
+  time_to_answer_ms: number   カード表示から回答までのミリ秒
+```
 
-MVP 後に追加
+---
 
-4. knowledge_card_opened
-5. xp_earned
-6. streak_updated
-7. profile_viewed
+## result_viewed
+
+```
+発火タイミング:
+  Result 画面（推奨回答 + 解説）が表示された時
+
+目的:
+  Land Reading Session の完了を計測する（= North Star）
+  この数がそのまま Land Reading Sessions 数になる
+
+Properties:
+  card_id:         string   カードの一意ID
+  xp_earned:       number   獲得 XP
+  is_recommended:  boolean  推奨回答を選んだか
+```
+
+---
+
+# MVP 推奨イベント（P2 — Phase 0 で実装）
+
+体験の深さを測るために必要。
+
+---
+
+## knowledge_card_opened
+
+```
+発火タイミング:
+  Result 画面の解説内にある「知識カード」リンクをタップした時
+
+目的:
+  Knowledge Unlock Rate の計測
+  深堀りするユーザーの割合を把握する
+
+Properties:
+  from_card_id:     string   どの土地カードの Result 画面から来たか
+  knowledge_id:     string   開いた知識カードの ID
+  knowledge_type:   string   種類（weed / philosophy / technique）
+```
+
+---
+
+## xp_earned
+
+```
+発火タイミング:
+  XP が加算された時
+
+目的:
+  ゲームループの動作確認
+  XP 加算のバグを検出する
+
+Properties:
+  card_id:       string   どのカードで獲得したか
+  xp_amount:     number   獲得 XP 量
+  total_xp:      number   加算後の累計 XP
+  new_level:     number   レベルアップした場合の新レベル（変化なければ現レベル）
+```
+
+---
+
+## streak_updated
+
+```
+発火タイミング:
+  連続記録（streak_days）が更新された時
+
+目的:
+  連続利用パターンの把握
+  Streak Retention の計測
+
+Properties:
+  streak_days:   number   更新後の連続日数
+  is_new_record: boolean  自己最高記録を更新したか
+```
+
+---
+
+# Phase 2 以降のイベント（P3 — 今は設計のみ）
+
+実装はユーザー100人以降で検討する。
+
+---
+
+## profile_viewed
+
+```
+発火タイミング:
+  Profile 画面を開いた時
+
+Properties:
+  level:            number
+  total_xp:         number
+  cards_completed:  number
+  streak_days:      number
+```
+
+---
+
+## collection_saved
+
+```
+発火タイミング:
+  お気に入り保存（Phase 3 機能）が使われた時
+
+Properties:
+  card_id:    string
+  card_type:  string  （land / weed / philosophy）
+```
+
+---
+
+## observation_logged
+
+```
+発火タイミング:
+  観察ログ（Phase 3 機能）が記録された時
+
+Properties:
+  card_id:       string
+  log_length:    number  文字数
+```
+
+---
+
+# フォールバック設計
+
+PostHog が使えない場合（オフライン等）でも
+アプリの機能は動作させる。
+
+```
+実装方針:
+  □ PostHog のイベント送信は try/catch で囲む
+  □ 失敗してもユーザー体験を壊さない
+  □ エラーは Sentry に送らない（計測エラーはノイズになる）
+
+コード例:
+  try {
+    posthog.capture('result_viewed', { card_id, xp_earned, is_recommended })
+  } catch {
+    // 計測失敗はサイレントに処理
+  }
+```
+
+---
+
+# イベント追加ルール
+
+新しいイベントを追加するときは:
+
+```
+1. このファイルに定義を先に書く
+2. North Star または Supporting Metrics に紐づくか確認する
+3. 「取りあえず計測」は追加しない
+4. Properties は必要最小限にする
+5. 実装後に PostHog で発火確認をする
+```

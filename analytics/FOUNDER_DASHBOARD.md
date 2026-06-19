@@ -2,275 +2,233 @@
 
 Imaging Agriculture
 
-Version 1.0
+Version 2.0
 
 ---
 
-# North Star
+# Philosophy
+
+多くを追うな。
+North Star を守れ。
+
+毎日5分で確認できる指標だけを追う。
+
+---
+
+# North Star Metric
 
 ## Land Reading Sessions
 
-定義
+定義:
+  ユーザーが土地カードを開き → 回答し → Result 画面を見た 1 回のセッション
 
-ユーザーが土地カードを開き
-回答し
-結果画面まで到達した回数
+なぜこれか:
+  このアプリの核心体験が1回完了したことを示す唯一の指標。
+  「土地カードを見ただけ」「途中離脱」は含まない。
 
-単位
+PostHog での計測:
+  result_viewed イベントの発火数 = Land Reading Sessions 数
 
-セッション数 / 期間
-
-確認頻度
-
-毎日
+目標:
+  Phase 0（MVP）: 累計 100 sessions（30人 × 3〜4 sessions）
+  Phase 1:        月次 500 sessions
+  Phase 2:        月次 2,000 sessions
+  Phase 3:        月次 10,000 sessions
 
 ---
 
-# Primary Metrics
+# 毎日確認する指標（Daily）
+
+確認時間: 朝5分
+
+---
 
 ## DAU
 
-Daily Active Users
-
-定義
-
-当日に 1 回以上 Land Reading Session を完了したユニークユーザー数
-
-なぜ追うか
-
-土地を読む習慣が日常化しているかを示す
-
-目標（MVP）
-
-未設定（計測開始後に設定）
-
----
-
-## WAU
-
-Weekly Active Users
-
-定義
-
-過去 7 日間に 1 回以上 Land Reading Session を完了したユニークユーザー数
-
-なぜ追うか
-
-週単位の継続利用を確認する
-
-目標（MVP）
-
-未設定
-
----
-
-## MAU
-
-Monthly Active Users
-
-定義
-
-過去 30 日間に 1 回以上 Land Reading Session を完了したユニークユーザー数
-
-なぜ追うか
-
-プロダクトの実質的な利用者規模を示す
-
-目標（MVP）
-
-未設定
+```
+定義:   当日に Land Reading Session を1回以上完了したユーザー数
+目標:   Phase 0 = 5人以上
+確認先: PostHog → Insights → DAU
+異常:   前日比 -50% 以上 → Sentry でエラー確認
+```
 
 ---
 
 ## Answer Completion Rate
 
-回答完了率
+```
+定義:   land_card_viewed に対する land_card_answered の割合
+        answered ÷ viewed × 100
+目標:   80% 以上
+確認先: PostHog → Funnels
+異常:   70% を下回る → 問いが難しすぎる / UX に問題がある可能性
+```
 
-定義
+---
 
-land_card_viewed イベント数に対する
-result_viewed イベント数の割合
+## Land Reading Sessions（当日）
 
-計算式
+```
+定義:   当日の result_viewed 発火数
+目標:   DAU × 2 以上（1人が平均2回完了）
+確認先: PostHog → Insights → result_viewed count
+異常:   DAU より大幅に少ない → Result 画面まで届いていない可能性
+```
 
-result_viewed ÷ land_card_viewed × 100
+---
 
-なぜ追うか
+# 週次確認する指標（Weekly）
 
-カードを開いたユーザーが最後まで体験しているかを示す
-
-MVP 成功条件
-
-70% 以上
+確認タイミング: 毎週月曜日
 
 ---
 
 ## D1 Retention
 
-1日後リテンション
-
-定義
-
-初回 Land Reading Session 完了日の翌日に
-再度 Land Reading Session を完了したユーザーの割合
-
-なぜ追うか
-
-初回体験が次の行動を生んでいるかを示す
-
-目標（MVP）
-
-未設定
+```
+定義:   初回利用翌日にも利用したユーザーの割合
+目標:   Phase 0 = 30% 以上
+確認先: PostHog → Retention
+判断:   30% 未満 → 初回体験に問題がある可能性
+```
 
 ---
 
 ## D7 Retention
 
-7日後リテンション
-
-定義
-
-初回 Land Reading Session 完了日から 7 日後に
-再度 Land Reading Session を完了したユーザーの割合
-
-なぜ追うか
-
-習慣化の兆候を示す
-
-目標（MVP）
-
-未設定
-
----
-
-## D30 Retention
-
-30日後リテンション
-
-定義
-
-初回 Land Reading Session 完了日から 30 日後に
-再度 Land Reading Session を完了したユーザーの割合
-
-なぜ追うか
-
-長期的な定着を示す
-
-目標（MVP）
-
-未設定
-
----
-
-## Average Cards Per User
-
-ユーザーあたり平均カード数
-
-定義
-
-計測期間内の total Land Reading Sessions ÷ DAU（または MAU）
-
-なぜ追うか
-
-1 ユーザーが平均何枚の土地を読んでいるかを示す
-深さの指標
-
-目標（MVP）
-
-未設定
+```
+定義:   初回利用から7日後にも利用したユーザーの割合
+目標:   Phase 0 = 20% 以上
+確認先: PostHog → Retention
+判断:   20% 未満 → 習慣化できていない
+```
 
 ---
 
 ## Knowledge Unlock Rate
 
-知識カード解放率
-
-定義
-
-Land Reading Session 完了後に
-knowledge_card_opened イベントが発火したセッションの割合
-
-計算式
-
-knowledge_card_opened セッション数 ÷ result_viewed 数 × 100
-
-なぜ追うか
-
-解説から知識探索へ進むユーザーの割合を示す
-コンテンツの深さへの興味を測る
-
-目標（MVP）
-
-未設定
+```
+定義:   Result 画面から knowledge_card_opened を発火したユーザーの割合
+        knowledge_card_opened ÷ result_viewed × 100
+目標:   20% 以上
+確認先: PostHog → Funnels
+判断:   低い → 解説の「もっと知る」誘導が弱い
+        高い（60%超） → 知識学習アプリになっている（要注意）
+```
 
 ---
 
 ## Streak Retention
 
-連続記録継続率
-
-定義
-
-streak_days ≥ 3 のユーザーの割合（アクティブユーザー中）
-
-なぜ追うか
-
-土地を見る習慣が形成されているかを示す
-習慣化の代理指標
-
-目標（MVP）
-
-未設定
-
----
-
-# Anti-Metrics
-
-追わない指標
-
-フォロワー数
-
-コメント数
-
-SNS 利用数
-
-PV
-
-これらは Land Reading Sessions に直結しないため
-追わない。
-
----
-
-# Dashboard Layout（想定）
-
 ```
-┌─────────────────────────────────┐
-│  Land Reading Sessions [今日]    │
-│  [昨日比 ±%]                    │
-├──────────────┬──────────────────┤
-│  DAU         │  Answer Complete │
-│              │  Rate            │
-├──────────────┼──────────────────┤
-│  D1 / D7 / D30 Retention       │
-├──────────────┴──────────────────┤
-│  Avg Cards/User  │  Streak Rate │
-└─────────────────────────────────┘
+定義:   streak_days ≥ 3 のユーザー数
+目標:   アクティブユーザーの30%
+確認先: Supabase → user_progress → streak_days 集計
+判断:   低い → 日常の習慣になっていない
 ```
 
-PostHog の Insights + Dashboard 機能で構築する。
+---
+
+# 月次確認する指標（Monthly）
+
+確認タイミング: 月初
 
 ---
 
-# Review Routine
+## D30 Retention
 
-毎朝
+```
+定義:   初回利用から30日後にも利用したユーザーの割合
+目標:   Phase 0 = 10% 以上
+確認先: PostHog → Retention
+判断:   10% 未満 → 体験価値を再検証する
+        10% 以上 → Phase 1 進行の判断材料になる
+```
 
-Land Reading Sessions（前日）を確認
+---
 
-毎週月曜
+## Cards Viewed per User
 
-WAU / Retention / Answer Completion Rate を確認
+```
+定義:   月間の land_card_viewed 総数 ÷ MAU
+目標:   10枚以上 / 月 / 人
+確認先: PostHog → Insights
+判断:   低い → コンテンツ量不足 / リピート動機が弱い
+```
 
-フェーズ完了時
+---
 
-全指標を振り返り ROADMAP の次フェーズ判断に使う
+# 追わない指標（Anti-Metrics）
+
+```
+❌ PV
+❌ フォロワー数・SNS 反応数
+❌ コメント数
+❌ インストール数
+❌ 正答率（正解/不正解の概念がない）
+❌ 「学習時間」（勉強アプリではない）
+```
+
+---
+
+# 失敗シグナル
+
+```
+・Answer Completion Rate < 70%
+  → 問いが難しすぎる / UX に問題
+
+・D7 Retention < 10%
+  → 体験に価値が感じられていない
+
+・D30 Retention < 5%
+  → 根本的な体験価値の問題
+
+・Knowledge Unlock Rate > 60%
+  → 知識学習アプリになっている（Failure）
+
+・Land Reading Sessions < DAU
+  → Result 画面に届いていない
+```
+
+---
+
+# PostHog ダッシュボード構成
+
+```
+Panel 1: North Star
+  → result_viewed の日次推移（折れ線）
+
+Panel 2: Funnel
+  → land_card_viewed → land_card_answered → result_viewed
+
+Panel 3: Retention
+  → D1 / D7 / D30
+
+Panel 4: DAU
+  → 日次推移
+
+Panel 5: Knowledge Unlock
+  → knowledge_card_opened ÷ result_viewed
+```
+
+---
+
+# 確認ルーティン
+
+```
+毎朝（5分）:
+  □ PostHog: DAU / Land Reading Sessions / Answer Completion Rate
+  □ Sentry: エラー未発生確認
+
+毎週月曜（15分）:
+  □ D1 / D7 / Knowledge Unlock / Streak 確認
+  □ 異常指標の原因分析
+  □ CUSTOMER_TRUTH_REPOSITORY.md に観察追記
+  □ 翌週の改善アクション1つ決定
+
+月初（30分）:
+  □ D30 Retention 確認
+  □ Land Reading Sessions 累計確認
+  □ Phase 進行判断
+  □ NORTH_STAR.md 目標との比較
+```
